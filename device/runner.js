@@ -15,14 +15,20 @@ module.exports = {
         return programDir;
     },
 
-    startProgram: function () {
+    startProgram: function (callback) {
         try {
             let processFile = this.getProgramDirectory() + '/index.js';
 
             runningProcess = childProcess.fork(processFile);
 
-            runningProcess.on('error', (e) => { console.log('Program error:', e); });
-            runningProcess.on('uncaughtException', (e) => { console.log('Program exception:', e); });
+            runningProcess.on('error', (e) => { 
+                console.log('Program error:', e); 
+                callback(e); 
+            });
+            runningProcess.on('uncaughtException', (e) => { 
+                console.log('Program exception:', e);
+                callback(e);  
+            });
         } catch (e) {
             console.log('Failed to start program:', e);
         }

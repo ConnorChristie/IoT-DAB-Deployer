@@ -5,6 +5,9 @@ var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var downloadRelease = require('download-github-release');
 
+var versionJsonObject = {};
+
+
 var Runner = require('./runner');
 var client = Client.fromConnectionString(connectionString, Protocol);
 
@@ -34,6 +37,9 @@ var downloadImage = function (twin, params, callback) {
     let project = params.gh.project;
     let version = params.version;
 
+    let archivedir = Runner.getProgramDirectory() + "\" + version.toString() + "\"; 
+
+    // Download to working directory
     downloadRelease(username, project, outputdir, (release) => release.tag_name === version, () => true, false)
         .then(function() {
             reportFWUpdateThroughTwin(twin, {
@@ -43,6 +49,11 @@ var downloadImage = function (twin, params, callback) {
 
             callback();
         })
+        .catch(function(err) {
+            console.error('Error downloading image:', err.message);
+        });
+    // Download to archive directory, skipping confirmation 
+    downloadRelease(username, project, archivedir, (release) => release.tag_name === version, () => true, false)
         .catch(function(err) {
             console.error('Error downloading image:', err.message);
         });
@@ -66,6 +77,13 @@ var applyImage = function (twin, programFile, callback) {
     
         callback();
     });
+}
+
+var handleError = function(error){
+    Runner.stopProgram(function() {
+        //applyImage
+        Runner.startProgram();
+    })
 }
 
 var onFirmwareUpdate = function (request, response) {
@@ -98,7 +116,7 @@ var onFirmwareUpdate = function (request, response) {
     });
 }
 
-Runner.startProgram();
+Runner.startProgram(handleError);
 
 client.open(function (err) {
     if (err) {
