@@ -31,8 +31,8 @@ module.exports = {
     stopProgram: function (callback) {
         try {
             runningProcess.kill();
-        
-            programProcess.on('close', function (code) {
+
+            runningProcess.on('close', function (code) {
                 callback();
             });
         } catch (e) {

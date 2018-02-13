@@ -90,13 +90,13 @@ var onFirmwareUpdate = function (request, response) {
 
             // Start the multi-stage firmware update
             downloadImage(twin, payload, function (programFile) {
-                applyImage(twin, programFile, function () { });
+                applyImage(twin, programFile, function () {
+                    
+                });
             });
         }
     });
 }
-
-console.log('hello');
 
 Runner.startProgram();
 
