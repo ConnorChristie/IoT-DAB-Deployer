@@ -1,10 +1,11 @@
+// Test IoT hub instance
+var connectionString = 'HostName=DAB-Hub.azure-devices.net;DeviceId=dabOne;SharedAccessKey=cnlDE9atnZX9ItOOORkpc4knvpzBJWi5L3843yS0mzQ=';
+
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var downloadRelease = require('download-github-release');
 
 var Runner = require('./runner');
-
-var connectionString = 'HostName=DAB-Hub.azure-devices.net;DeviceId=dabOne;SharedAccessKey=cnlDE9atnZX9ItOOORkpc4knvpzBJWi5L3843yS0mzQ=';
 var client = Client.fromConnectionString(connectionString, Protocol);
 
 var reportFWUpdateThroughTwin = function (twin, firmwareUpdateValue) {
@@ -16,30 +17,34 @@ var reportFWUpdateThroughTwin = function (twin, firmwareUpdateValue) {
 
     twin.properties.reported.update(patch, function (err) {
         if (err) throw err;
-        console.log('twin state reported: ' + firmwareUpdateValue.status);
+        console.log('Twin state reported: ' + firmwareUpdateValue.status);
     });
 };
 
-var downloadImage = function (twin, version, callback) {
-    var now = new Date();
+var downloadImage = function (twin, params, callback) {
+    let now = new Date();
 
     reportFWUpdateThroughTwin(twin, {
         status: 'downloading',
     });
 
-    var outputdir = '/Users/connor/Desktop/Architecture/DAB/program';
+    let outputdir = Runner.getProgramDirectory();
 
-    downloadRelease('ConnorChristie', 'pinger', outputdir, (release) => release.tag_name === version, () => true, false)
+    let username = params.gh.username;
+    let project = params.gh.project;
+    let version = params.version;
+
+    downloadRelease(username, project, outputdir, (release) => release.tag_name === version, () => true, false)
         .then(function() {
             reportFWUpdateThroughTwin(twin, {
                 status: 'downloadComplete',
                 downloadCompleteTime: now.toISOString(),
             });
 
-            callback(outputdir + '/index.js');
+            callback();
         })
         .catch(function(err) {
-            console.error(err.message);
+            console.error('Error downloading image:', err.message);
         });
 }
 
@@ -51,8 +56,8 @@ var applyImage = function (twin, programFile, callback) {
         startedApplyingImage: now.toISOString()
     });
 
-    Runner.stopProcess(function() {
-        Runner.startProcess(programFile);
+    Runner.stopProgram(function() {
+        Runner.startProgram();
 
         reportFWUpdateThroughTwin(twin, {
             status: 'applyComplete',
@@ -84,15 +89,16 @@ var onFirmwareUpdate = function (request, response) {
             console.log('Device twin acquired.');
 
             // Start the multi-stage firmware update
-            downloadImage(twin, payload.version, function (programFile) {
+            downloadImage(twin, payload, function (programFile) {
                 applyImage(twin, programFile, function () { });
             });
-
         }
     });
 }
 
-Runner.startProcess('./program/index.js');
+console.log('hello');
+
+Runner.startProgram();
 
 client.open(function (err) {
     if (err) {

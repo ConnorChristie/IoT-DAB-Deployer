@@ -7,18 +7,19 @@ var client = Client.fromConnectionString(connectionString);
 var deviceToUpdate = 'dabOne';
 
 var startFirmwareUpdateDevice = function () {
-    var version = process.argv[2] || '1.2';
-    
-    var params = {
+    let version = process.argv[2] || '1.2';
+
+    let params = {
+        gh: {
+            username: 'ConnorChristie',
+            project: 'pinger'
+        },
         version: version
     };
 
-    var methodName = "firmwareUpdate";
-    var payloadData = JSON.stringify(params);
-
-    var methodParams = {
-        methodName: methodName,
-        payload: payloadData,
+    let methodParams = {
+        methodName: 'firmwareUpdate',
+        payload: JSON.stringify(params),
         timeoutInSeconds: 30
     };
 

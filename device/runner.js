@@ -1,17 +1,34 @@
 var childProcess = require('child_process');
+var path = require('path');
+var fs = require('fs');
 
 var runningProcess;
 
 module.exports = {
-    startProcess: function (programFile) {
+    getProgramDirectory: function () {
+        let programDir = __dirname + '/program';
+
+        if (!fs.existsSync(programDir)) {
+            fs.mkdirSync(programDir);
+        }
+
+        return programDir;
+    },
+
+    startProgram: function () {
         try {
-            runningProcess = childProcess.fork(programFile);
+            let processFile = this.getProgramDirectory() + '/index.js';
+
+            runningProcess = childProcess.fork(processFile);
+
+            runningProcess.on('error', (e) => { console.log('Program error:', e); });
+            runningProcess.on('uncaughtException', (e) => { console.log('Program exception:', e); });
         } catch (e) {
             console.log('Failed to start program:', e);
         }
     },
 
-    stopProcess: function (callback) {
+    stopProgram: function (callback) {
         try {
             runningProcess.kill();
         
