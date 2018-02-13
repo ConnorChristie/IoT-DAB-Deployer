@@ -8,8 +8,15 @@ var fs = require('fs');
 
 var versionJsonObject = {};
 
-let rawdata = fs.readFileSync('versions.json');
-versionJsonObject = JSON.parse(rawdata);
+try{
+    let rawdata = fs.readFileSync('versions.json');
+    versionJsonObject = JSON.parse(rawdata);
+}catch (err){
+    versionJsonObject.lastGoodBuild = "";
+    versionJsonObject.currentBuild = "";
+    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject));
+}
+
 
 var Runner = require('./runner');
 var client = Client.fromConnectionString(connectionString, Protocol);
