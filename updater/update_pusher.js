@@ -25,6 +25,7 @@ var startFirmwareUpdateDevice = function () {
 
     client.invokeDeviceMethod(deviceToUpdate, methodParams, function (err, result) {
         if (err) {
+            console.log(err);
             console.error('Could not start the firmware update on the device: ' + err.message)
         }
     });

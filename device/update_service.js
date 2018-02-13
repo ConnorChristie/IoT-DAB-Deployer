@@ -48,9 +48,10 @@ var downloadImage = function (twin, params, callback) {
     let username = params.gh.username;
     let project = params.gh.project;
     let version = params.version;
-
-    let archivedir = Runner.getProgramDirectory() + "\\archive\\" + version.toString() + "\\"; 
-
+    let archivedir = Runner.getProgramDirectory() + "/archive/" + version.toString() + "/"; 
+    if (!fs.existsSync(archivedir)) {
+        fs.mkdirSync(archivedir);
+    }
     // Download to working directory
     downloadRelease(username, project, outputdir, (release) => release.tag_name === version, () => true, false)
         .then(function() {
