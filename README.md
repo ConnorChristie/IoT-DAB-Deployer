@@ -39,6 +39,6 @@ Includes both the device firmware and updater scripts that be run by the deploye
 
 ## Glossary
 
-* Data Acquisition Buoy (DAB): A device set out in a lake to collect data about the water around it, sending its data back to the central system.
-* Deployment Server: A server that deploys the binary created by the build server to selected devices. 
-* Build Server: A build server, also called a continuous integration server (CI server), is a centralized, stable and reliable environment for building distributed development projects.
+* __Data Acquisition Buoy (DAB):__ A device set out in a lake to collect data about the water around it, sending its data back to the central system.
+* __Deployment Server:__ A server that deploys the binary created by the build server to selected devices. 
+* __Build Server:__ A build server, also called a continuous integration server (CI server), is a centralized, stable and reliable environment for building distributed development projects.
