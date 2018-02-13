@@ -31,6 +31,7 @@ module.exports = {
             });
         } catch (e) {
             console.log('Failed to start program:', e);
+                callback(e);  
         }
     },
 

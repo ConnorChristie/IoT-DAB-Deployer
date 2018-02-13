@@ -4,9 +4,12 @@ var connectionString = 'HostName=DAB-Hub.azure-devices.net;DeviceId=dabOne;Share
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var downloadRelease = require('download-github-release');
+var fs = require('fs');
 
 var versionJsonObject = {};
 
+let rawdata = fs.readFileSync('versions.json');
+versionJsonObject = JSON.parse(rawdata);
 
 var Runner = require('./runner');
 var client = Client.fromConnectionString(connectionString, Protocol);
@@ -26,6 +29,8 @@ var reportFWUpdateThroughTwin = function (twin, firmwareUpdateValue) {
 
 var downloadImage = function (twin, params, callback) {
     let now = new Date();
+    versionJsonObject.lastGoodBuild = versionJsonObject.currentBuild;
+    // Add current version to good version list 
 
     reportFWUpdateThroughTwin(twin, {
         status: 'downloading',
@@ -37,7 +42,7 @@ var downloadImage = function (twin, params, callback) {
     let project = params.gh.project;
     let version = params.version;
 
-    let archivedir = Runner.getProgramDirectory() + "\" + version.toString() + "\"; 
+    let archivedir = Runner.getProgramDirectory() + "\\archive\\" + version.toString() + "\\"; 
 
     // Download to working directory
     downloadRelease(username, project, outputdir, (release) => release.tag_name === version, () => true, false)
@@ -57,6 +62,9 @@ var downloadImage = function (twin, params, callback) {
         .catch(function(err) {
             console.error('Error downloading image:', err.message);
         });
+
+    versionJsonObject.currentBuild = version;
+    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject));
 }
 
 var applyImage = function (twin, programFile, callback) {
@@ -80,10 +88,15 @@ var applyImage = function (twin, programFile, callback) {
 }
 
 var handleError = function(error){
+    let version = versionJsonObject.lastGoodBuild;
+    let archivedir = Runner.getProgramDirectory() + "\\archive\\" + version.toString() + "\\"; 
+
     Runner.stopProgram(function() {
-        //applyImage
-        Runner.startProgram();
+        applyImage(twin, archivedir, () => Runner.startProgram());
     })
+
+    versionJsonObject.currentBuild = version;
+    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject));
 }
 
 var onFirmwareUpdate = function (request, response) {
