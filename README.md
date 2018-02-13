@@ -37,6 +37,14 @@ Includes both the device firmware and updater scripts that be run by the deploye
     * If an error occurs while updating, the DAB will automatically roll itself back to the previously running build
     * A notification is also sent back to the deployment server indicating a failure
 
+
+### Rollback Mechanism
+
+* When a new update is being applied to a DAB, the currently running version will be marked as good only if it has not crashed since it was put into place.
+* During the apply phase of updating the DAB software, if the current version was marked as good, it will be archived. 
+* If any errors are encounted during the lifecycle of the current release of the DAB software, the service runner will rollback the DAB software to the last known good version that it has locally stored.
+
+
 ## Glossary
 
 * __Data Acquisition Buoy (DAB):__ A device set out in a lake to collect data about the water around it, sending its data back to the central system.
