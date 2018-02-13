@@ -48,7 +48,11 @@ var downloadImage = function (twin, params, callback) {
     let username = params.gh.username;
     let project = params.gh.project;
     let version = params.version;
-    let archivedir = Runner.getProgramDirectory() + "/archive/" + version.toString() + "/"; 
+    let archivefolder = Runner.getProgramDirectory() + "/archive/"
+    let archivedir = archivefolder + "/" + version.toString() + "/"; 
+    if (!fs.existsSync(archivefolder)) {
+        fs.mkdirSync(archivefolder);
+    }
     if (!fs.existsSync(archivedir)) {
         fs.mkdirSync(archivedir);
     }
