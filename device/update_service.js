@@ -8,13 +8,17 @@ var fs = require('fs');
 
 var versionJsonObject = {};
 
+var writeJsonVersions = function () {
+    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject, null, 2));
+}
+
 try{
     let rawdata = fs.readFileSync('versions.json');
     versionJsonObject = JSON.parse(rawdata);
 }catch (err){
     versionJsonObject.lastGoodBuild = "";
     versionJsonObject.currentBuild = "";
-    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject));
+    writeJsonVersions();
 }
 
 
@@ -76,7 +80,7 @@ var downloadImage = function (twin, params, callback) {
         });
 
     versionJsonObject.currentBuild = version;
-    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject));
+    writeJsonVersions();
 }
 
 var applyImage = function (twin, programFile, callback) {
@@ -108,7 +112,7 @@ var handleError = function(error){
     })
 
     versionJsonObject.currentBuild = version;
-    fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject));
+    writeJsonVersions();
 }
 
 var onFirmwareUpdate = function (request, response) {
