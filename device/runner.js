@@ -48,7 +48,7 @@ module.exports = {
                 callback();
             });
         } catch (e) {
-            console.log('Failed to kill program:', e);
+            console.log('Failed to kill program:', e.message);
 
             callback();
         }

@@ -47,8 +47,6 @@ var downloadImage = function (twin, params, callback) {
     let project = params.gh.project;
     let version = params.version;
 
-    console.log('params', params);
-
     let outputDir = Runner.getProgramDirectory(version);
 
     // Download to working directory
@@ -59,7 +57,7 @@ var downloadImage = function (twin, params, callback) {
                 downloadCompleteTime: now.toISOString(),
             });
 
-            callback();
+            callback(version);
         })
         .catch(function (err) {
             console.error('Error downloading image:', err.message);
