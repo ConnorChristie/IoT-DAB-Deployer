@@ -48,7 +48,7 @@ var downloadImage = function (twin, params, callback) {
     let username = params.gh.username;
     let project = params.gh.project;
     let version = params.version;
-    let archivefolder = Runner.getProgramDirectory() + "/archive/"
+    let archivefolder = __dirname + "/archive/"
     let archivedir = archivefolder + "/" + version.toString() + "/"; 
     if (!fs.existsSync(archivefolder)) {
         fs.mkdirSync(archivefolder);
@@ -101,7 +101,7 @@ var applyImage = function (twin, programFile, callback) {
 
 var handleError = function(error){
     let version = versionJsonObject.lastGoodBuild;
-    let archivedir = Runner.getProgramDirectory() + "\\archive\\" + version.toString() + "\\"; 
+    let archivedir = __dirname + "/archive/" + version.toString() + "/"; 
 
     Runner.stopProgram(function() {
         applyImage(twin, archivedir, () => Runner.startProgram());
