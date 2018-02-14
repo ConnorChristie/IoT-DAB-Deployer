@@ -5,32 +5,35 @@ var fs = require('fs');
 var runningProcess;
 
 module.exports = {
-    getProgramDirectory: function () {
+    getProgramDirectory: function (version) {
         let programDir = __dirname + '/program';
+        let versionDir = programDir + '/' + version;
 
         if (!fs.existsSync(programDir)) {
             fs.mkdirSync(programDir);
         }
 
-        return programDir;
+        if (!fs.existsSync(versionDir)) {
+            fs.mkdirSync(versionDir);
+        }
+
+        return versionDir;
     },
 
-    startProgram: function (callback) {
+    startProgram: function (version, callback) {
         try {
-            let processFile = this.getProgramDirectory() + '/index.js';
+            let processFile = this.getProgramDirectory(version) + '/index.js';
 
-			npmInstall.on('close', (code) => {
-				runningProcess = childProcess.fork(processFile);
+            runningProcess = childProcess.fork(processFile);
 
-				runningProcess.on('error', (e) => { 
-					console.log('Program error:', e); 
-					callback(e); 
-				});
-				runningProcess.on('uncaughtException', (e) => { 
-					console.log('Program exception:', e);
-					callback(e);  
-				});
-			});
+            runningProcess.on('error', (e) => { 
+                console.log('Program error:', e); 
+                callback(e); 
+            });
+            runningProcess.on('uncaughtException', (e) => { 
+                console.log('Program exception:', e);
+                callback(e);  
+            });
         } catch (e) {
             console.log('Failed to start program:', e);
                 callback(e);  

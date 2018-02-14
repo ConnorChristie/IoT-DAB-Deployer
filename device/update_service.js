@@ -8,19 +8,14 @@ var fs = require('fs');
 
 var versionJsonObject = {};
 
+try {
+    let rawdata = fs.readFileSync('versions.json');
+    var versionJsonObject = JSON.parse(rawdata);
+} catch (e) {}
+
 var writeJsonVersions = function () {
     fs.writeFileSync('versions.json', JSON.stringify(versionJsonObject, null, 2));
 }
-
-try{
-    let rawdata = fs.readFileSync('versions.json');
-    versionJsonObject = JSON.parse(rawdata);
-}catch (err){
-    versionJsonObject.lastGoodBuild = "";
-    versionJsonObject.currentBuild = "";
-    writeJsonVersions();
-}
-
 
 var Runner = require('./runner');
 var client = Client.fromConnectionString(connectionString, Protocol);
@@ -40,6 +35,7 @@ var reportFWUpdateThroughTwin = function (twin, firmwareUpdateValue) {
 
 var downloadImage = function (twin, params, callback) {
     let now = new Date();
+
     versionJsonObject.lastGoodBuild = versionJsonObject.currentBuild;
     // Add current version to good version list 
 
@@ -47,22 +43,17 @@ var downloadImage = function (twin, params, callback) {
         status: 'downloading',
     });
 
-    let outputdir = Runner.getProgramDirectory();
-
     let username = params.gh.username;
     let project = params.gh.project;
     let version = params.version;
-    let archivefolder = __dirname + "/archive/"
-    let archivedir = archivefolder + "/" + version.toString() + "/"; 
-    if (!fs.existsSync(archivefolder)) {
-        fs.mkdirSync(archivefolder);
-    }
-    if (!fs.existsSync(archivedir)) {
-        fs.mkdirSync(archivedir);
-    }
+
+    console.log('params', params);
+
+    let outputDir = Runner.getProgramDirectory(version);
+
     // Download to working directory
-    downloadRelease(username, project, outputdir, (release) => release.tag_name === version, () => true, false)
-        .then(function() {
+    downloadRelease(username, project, outputDir, (release) => release.tag_name === version, () => true, false)
+        .then(function () {
             reportFWUpdateThroughTwin(twin, {
                 status: 'downloadComplete',
                 downloadCompleteTime: now.toISOString(),
@@ -70,12 +61,7 @@ var downloadImage = function (twin, params, callback) {
 
             callback();
         })
-        .catch(function(err) {
-            console.error('Error downloading image:', err.message);
-        });
-    // Download to archive directory, skipping confirmation 
-    downloadRelease(username, project, archivedir, (release) => release.tag_name === version, () => true, false)
-        .catch(function(err) {
+        .catch(function (err) {
             console.error('Error downloading image:', err.message);
         });
 
@@ -83,7 +69,7 @@ var downloadImage = function (twin, params, callback) {
     writeJsonVersions();
 }
 
-var applyImage = function (twin, programFile, callback) {
+var applyImage = function (twin, version, callback) {
     var now = new Date();
 
     reportFWUpdateThroughTwin(twin, {
@@ -91,28 +77,25 @@ var applyImage = function (twin, programFile, callback) {
         startedApplyingImage: now.toISOString()
     });
 
-    Runner.stopProgram(function() {
-        Runner.startProgram();
+    Runner.stopProgram(function () {
+        Runner.startProgram(version, handleError);
 
         reportFWUpdateThroughTwin(twin, {
             status: 'applyComplete',
             lastFirmwareUpdate: now.toISOString()
         });
-    
+
         callback();
     });
 }
 
-var handleError = function(error){
+var handleError = function (error) {
     let version = versionJsonObject.lastGoodBuild;
-    let archivedir = __dirname + "/archive/" + version.toString() + "/"; 
 
-    Runner.stopProgram(function() {
-        applyImage(twin, archivedir, () => Runner.startProgram());
-    })
-
-    versionJsonObject.currentBuild = version;
-    writeJsonVersions();
+    applyImage(twin, version, () => {
+        versionJsonObject.currentBuild = version;
+        writeJsonVersions();
+    });
 }
 
 var onFirmwareUpdate = function (request, response) {
@@ -136,16 +119,16 @@ var onFirmwareUpdate = function (request, response) {
             console.log('Device twin acquired.');
 
             // Start the multi-stage firmware update
-            downloadImage(twin, payload, function (programFile) {
-                applyImage(twin, programFile, function () {
-                    
-                });
+            downloadImage(twin, payload, function (version) {
+                applyImage(twin, version, function () { });
             });
         }
     });
 }
 
-Runner.startProgram(handleError);
+if (versionJsonObject.currentBuild) {
+    Runner.startProgram(versionJsonObject.currentBuild, handleError);
+}
 
 client.open(function (err) {
     if (err) {
