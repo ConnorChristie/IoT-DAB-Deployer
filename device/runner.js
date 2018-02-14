@@ -17,9 +17,7 @@ module.exports = {
 
     startProgram: function (callback) {
         try {
-            let processFile = this.getProgramDirectory() + '/pinger.js';
-			
-			let npmInstall = childProcess.exec(`npm install -p ${this.getProgramDirectory()}`);
+            let processFile = this.getProgramDirectory() + '/index.js';
 
 			npmInstall.on('close', (code) => {
 				runningProcess = childProcess.fork(processFile);
