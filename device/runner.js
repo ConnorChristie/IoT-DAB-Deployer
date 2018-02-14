@@ -17,18 +17,22 @@ module.exports = {
 
     startProgram: function (callback) {
         try {
-            let processFile = this.getProgramDirectory() + '/index.js';
+            let processFile = this.getProgramDirectory() + '/pinger.js';
+			
+			let npmInstall = childProcess.exec(`npm install -p ${this.getProgramDirectory()}`);
 
-            runningProcess = childProcess.fork(processFile);
+			npmInstall.on('close', (code) => {
+				runningProcess = childProcess.fork(processFile);
 
-            runningProcess.on('error', (e) => { 
-                console.log('Program error:', e); 
-                callback(e); 
-            });
-            runningProcess.on('uncaughtException', (e) => { 
-                console.log('Program exception:', e);
-                callback(e);  
-            });
+				runningProcess.on('error', (e) => { 
+					console.log('Program error:', e); 
+					callback(e); 
+				});
+				runningProcess.on('uncaughtException', (e) => { 
+					console.log('Program exception:', e);
+					callback(e);  
+				});
+			});
         } catch (e) {
             console.log('Failed to start program:', e);
                 callback(e);  

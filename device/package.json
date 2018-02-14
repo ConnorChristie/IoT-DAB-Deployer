@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node update_service.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -12,6 +13,7 @@
     "azure-iot-device": "^1.3.0",
     "azure-iot-device-mqtt": "^1.3.0",
     "download-file": "^0.1.5",
-    "download-github-release": "^0.3.2"
+    "download-github-release": "^0.3.2",
+    "pinger": "file:program"
   }
 }
