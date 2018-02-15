@@ -1,5 +1,5 @@
 // Test IoT hub instance
-var connectionString = 'HostName=DAB-Hub.azure-devices.net;DeviceId=dabOne;SharedAccessKey=cnlDE9atnZX9ItOOORkpc4knvpzBJWi5L3843yS0mzQ=';
+var connectionString = process.argv[2];
 
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
@@ -88,16 +88,24 @@ var applyImage = function (twin, version, callback) {
 }
 
 var handleError = function (error) {
-    let version = versionJsonObject.lastGoodBuild;
+    client.getTwin(function (err, twin) {
+        let version = versionJsonObject.lastGoodBuild;
 
-    applyImage(twin, version, () => {
-        versionJsonObject.currentBuild = version;
-        writeJsonVersions();
+        console.log('Error caught, reverting to v' + version);
+
+        reportFWUpdateThroughTwin(twin, {
+            status: 'rollback',
+            lastFirmwareUpdate: new Date().toISOString()
+        });
+
+        applyImage(twin, version, () => {
+            versionJsonObject.currentBuild = version;
+            writeJsonVersions();
+        });
     });
 }
 
 var onFirmwareUpdate = function (request, response) {
-
     // Respond the cloud app for the direct method
     response.send(200, 'FirmwareUpdate started', function (err) {
         if (err) {

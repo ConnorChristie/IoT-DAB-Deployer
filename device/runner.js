@@ -20,33 +20,61 @@ module.exports = {
         return versionDir;
     },
 
-    startProgram: function (version, callback) {
+    startProgram: function (version, errorCallback) {
+        let errorThrown = false;
+
+        function handleError(error) {
+            console.log('Program error:', error);
+            errorThrown = true;
+            errorCallback();
+        }
+
         try {
             let processFile = this.getProgramDirectory(version) + '/index.js';
 
             runningProcess = childProcess.fork(processFile);
+            console.log('Started program using v' + version);
 
-            runningProcess.on('error', (e) => { 
-                console.log('Program error:', e); 
-                callback(e); 
+            runningProcess.on('exit', (code) => {
+                if (code && code !== 0) {
+                    handleError('exited with error code: ' + code);
+                }
             });
-            runningProcess.on('uncaughtException', (e) => { 
-                console.log('Program exception:', e);
-                callback(e);  
-            });
+
+            runningProcess.on('error', handleError);
+            runningProcess.on('uncaughtException', handleError);
         } catch (e) {
-            console.log('Failed to start program:', e);
-                callback(e);  
+            handleError(e);
         }
     },
 
     stopProgram: function (callback) {
+        let callbackCalled = false;
+
+        function handleStop(code) {
+            if (!callbackCalled) {
+                console.log('Program stopped');
+                callbackCalled = true;
+                callback();
+            }
+        }
+
+        if (runningProcess.exitCode) {
+            handleStop();
+
+            return;
+        }
+
         try {
             runningProcess.kill();
 
-            runningProcess.on('close', function (code) {
-                callback();
-            });
+            console.log('Stopping program');
+
+            runningProcess.on('close', handleStop);
+            runningProcess.on('close', handleStop);
+
+            runningProcess.on('SIGINT', handleStop);
+            runningProcess.on('SIGTERM', handleStop);
         } catch (e) {
             console.log('Failed to kill program:', e.message);
 
